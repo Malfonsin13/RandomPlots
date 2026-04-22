@@ -1,0 +1,579 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Pitcher Workload Dashboard | Ages 18-22</title>
+<script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+<style>
+  :root {
+    --bg: #0b1220;
+    --panel: #121a2b;
+    --panel2: #162033;
+    --text: #e7edf7;
+    --muted: #97a6c0;
+    --accent: #5da9ff;
+    --accent2: #7fd1ae;
+    --warn: #ffcd6b;
+    --border: #26324a;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: Inter, Segoe UI, Arial, sans-serif;
+    background: linear-gradient(180deg, #0b1220 0%, #0f1728 100%);
+    color: var(--text);
+  }
+  .wrap {
+    max-width: 1600px;
+    margin: 0 auto;
+    padding: 24px;
+  }
+  h1 {
+    margin: 0 0 8px 0;
+    font-size: 30px;
+  }
+  .sub {
+    color: var(--muted);
+    margin-bottom: 20px;
+    line-height: 1.45;
+  }
+  .grid {
+    display: grid;
+    gap: 16px;
+  }
+  .cards {
+    grid-template-columns: repeat(4, minmax(220px, 1fr));
+    margin-bottom: 18px;
+  }
+  .card, .panel {
+    background: rgba(18, 26, 43, 0.92);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 16px;
+    box-shadow: 0 12px 30px rgba(0,0,0,0.22);
+  }
+  .metric-title {
+    color: var(--muted);
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 8px;
+  }
+  .metric-value {
+    font-size: 28px;
+    font-weight: 700;
+  }
+  .metric-sub {
+    color: var(--muted);
+    margin-top: 6px;
+    font-size: 13px;
+  }
+  .toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    align-items: end;
+    margin-bottom: 18px;
+  }
+  .control {
+    min-width: 180px;
+  }
+  label {
+    display: block;
+    margin-bottom: 6px;
+    color: var(--muted);
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+  }
+  select, input[type="range"] {
+    width: 100%;
+    background: var(--panel2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    border-radius: 10px;
+    padding: 10px 12px;
+  }
+  .plots {
+    grid-template-columns: 1.2fr 0.8fr;
+    align-items: start;
+  }
+  .full {
+    grid-column: 1 / -1;
+  }
+  #rangePlot, #scatterPlot, #heatmapMean, #heatmapEff, #ageBars {
+    width: 100%;
+    min-height: 420px;
+  }
+  #rangePlot {
+    min-height: 900px;
+  }
+  .conclusions p {
+    margin: 0 0 10px 0;
+    line-height: 1.55;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+  th, td {
+    border-bottom: 1px solid var(--border);
+    padding: 8px 10px;
+    text-align: right;
+  }
+  th:first-child, td:first-child {
+    text-align: left;
+  }
+  th {
+    position: sticky;
+    top: 0;
+    background: #172238;
+    z-index: 2;
+  }
+  .table-wrap {
+    max-height: 480px;
+    overflow: auto;
+    border-radius: 12px;
+  }
+  .pill {
+    display: inline-block;
+    padding: 4px 8px;
+    border-radius: 999px;
+    background: rgba(93, 169, 255, 0.14);
+    color: #b8d9ff;
+    font-size: 12px;
+    margin-right: 8px;
+    margin-bottom: 8px;
+  }
+  .muted {
+    color: var(--muted);
+  }
+  @media (max-width: 1100px) {
+    .cards, .plots {
+      grid-template-columns: 1fr;
+    }
+    #rangePlot {
+      min-height: 700px;
+    }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Pitchers 18–22 | 60+ IP | Org Dashboard</h1>
+  <div class="sub">
+    Actual artifact this time, not spreadsheet cosplay. This dashboard combines 2023–2025 and lets you inspect org-by-age volume, range, and efficiency without dragging season along everywhere like extra luggage.
+  </div>
+
+  <div class="grid cards">
+    <div class="card">
+      <div class="metric-title">Volume leader</div>
+      <div class="metric-value">COL</div>
+      <div class="metric-sub">3931.3 IP across 41 pitcher-seasons</div>
+    </div>
+    <div class="card">
+      <div class="metric-title">Efficiency leader</div>
+      <div class="metric-value">KC</div>
+      <div class="metric-sub">15.86 pitches/IP among orgs with 25+ pitcher-seasons</div>
+    </div>
+    <div class="card">
+      <div class="metric-title">Age 22 share</div>
+      <div class="metric-value">42.9%</div>
+      <div class="metric-sub">369 pitcher-seasons. This bucket drives most of the story.</div>
+    </div>
+    <div class="card">
+      <div class="metric-title">Age 18 share</div>
+      <div class="metric-value">2.3%</div>
+      <div class="metric-sub">20 pitcher-seasons. Tiny sample, handle with oven mitts.</div>
+    </div>
+  </div>
+
+  <div class="panel conclusions full">
+    <div class="metric-title">Conclusions</div>
+    <p>Volume king: COL leads the whole 2023–2025 pool with 3931.3 IP across 41 pitcher-seasons. STL is next at 3430.7.</p><p>Best efficiency among substantial samples: KC is best at 15.86 pitches/IP, with TB basically tied at 15.88. That means they got similar innings with less pitch burn than most clubs.</p><p>Do not over-read age 18. There are only 20 pitcher-seasons there, which is just 2.3% of the whole sample. Age 22 is the real bulk of the dataset at 369 pitcher-seasons (42.9%).</p><p>MIL is the clearest young-age standout. They lead age 18 in both volume and efficiency (407.0 IP, 15.65 pitches/IP) and age 19 is strong too (649.7 IP, 15.59).</p><p>MIA owns age 20 volume (859.3 IP), but TEX is cleaner on efficiency at age 20 among decent samples (15.70 pitches/IP). So Miami looks like load, Texas looks like load with less waste.</p><p>At age 21, HOU has the most total IP (1314.7) but not efficient (17.60 pitches/IP). STL is more interesting there: less volume, but elite efficiency and a high mean workload (105.1 mean IP, 15.63 pitches/IP).</p><p>No obvious hard IP caps jump off the page once you aggregate seasons. What shows up more often is wide org-age range behavior, which looks more like role mix or developmental spread than a strict organizational stop-sign.</p>
+  </div>
+
+  <div class="panel full" style="margin-top:16px;">
+    <div class="toolbar">
+      <div class="control">
+        <label for="orgSelect">Org filter</label>
+        <select id="orgSelect"></select>
+      </div>
+      <div class="control">
+        <label for="ageSelect">Age filter</label>
+        <select id="ageSelect">
+          <option value="ALL">All ages</option>
+          <option value="18">18</option>
+          <option value="19">19</option>
+          <option value="20">20</option>
+          <option value="21">21</option>
+          <option value="22">22</option>
+        </select>
+      </div>
+      <div class="control">
+        <label for="minN">Minimum N for org-age rows: <span id="minNLabel">1</span></label>
+        <input id="minN" type="range" min="1" max="10" step="1" value="1"/>
+      </div>
+    </div>
+    <div class="muted">
+      Range plot: line = min to max IP, dot = median. Heatmaps use the same combined 2023–2025 pool. Efficiency = lower pitches per IP is better.
+    </div>
+  </div>
+
+  <div class="grid plots" style="margin-top:16px;">
+    <div class="panel">
+      <div class="metric-title">IP range by org and age</div>
+      <div id="rangePlot"></div>
+    </div>
+    <div class="panel">
+      <div class="metric-title">Org volume vs efficiency</div>
+      <div id="scatterPlot"></div>
+    </div>
+    <div class="panel">
+      <div class="metric-title">Mean IP heatmap</div>
+      <div id="heatmapMean"></div>
+    </div>
+    <div class="panel">
+      <div class="metric-title">Pitches/IP heatmap</div>
+      <div id="heatmapEff"></div>
+    </div>
+    <div class="panel full">
+      <div class="metric-title">Age bucket sample size</div>
+      <div id="ageBars"></div>
+    </div>
+    <div class="panel full">
+      <div class="metric-title">Filtered org-age table</div>
+      <div class="table-wrap">
+        <table id="summaryTable"></table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const orgSummary = [{"Org": "ATH", "pitcher_seasons": 28.0, "pitchers_unique": 25.0, "total_ip": 2572.667, "mean_ip": 91.881, "median_ip": 87.0, "total_pitches": 42722.0, "pitches_per_ip": 16.606, "ip_per_pitch": 0.06}, {"Org": "ATL", "pitcher_seasons": 30.0, "pitchers_unique": 25.0, "total_ip": 2689.667, "mean_ip": 89.656, "median_ip": 85.333, "total_pitches": 44071.0, "pitches_per_ip": 16.385, "ip_per_pitch": 0.061}, {"Org": "AZ", "pitcher_seasons": 37.0, "pitchers_unique": 28.0, "total_ip": 3418.0, "mean_ip": 92.378, "median_ip": 93.667, "total_pitches": 56733.0, "pitches_per_ip": 16.598, "ip_per_pitch": 0.06}, {"Org": "BAL", "pitcher_seasons": 32.0, "pitchers_unique": 27.0, "total_ip": 2753.0, "mean_ip": 86.031, "median_ip": 87.5, "total_pitches": 46462.0, "pitches_per_ip": 16.877, "ip_per_pitch": 0.059}, {"Org": "BOS", "pitcher_seasons": 31.0, "pitchers_unique": 27.0, "total_ip": 2676.333, "mean_ip": 86.333, "median_ip": 89.667, "total_pitches": 43810.0, "pitches_per_ip": 16.369, "ip_per_pitch": 0.061}, {"Org": "CHC", "pitcher_seasons": 19.0, "pitchers_unique": 17.0, "total_ip": 1515.0, "mean_ip": 79.737, "median_ip": 80.0, "total_pitches": 25689.0, "pitches_per_ip": 16.956, "ip_per_pitch": 0.059}, {"Org": "CIN", "pitcher_seasons": 24.0, "pitchers_unique": 20.0, "total_ip": 2166.667, "mean_ip": 90.278, "median_ip": 91.833, "total_pitches": 35788.0, "pitches_per_ip": 16.518, "ip_per_pitch": 0.061}, {"Org": "CLE", "pitcher_seasons": 25.0, "pitchers_unique": 18.0, "total_ip": 2401.333, "mean_ip": 96.053, "median_ip": 102.333, "total_pitches": 39290.0, "pitches_per_ip": 16.362, "ip_per_pitch": 0.061}, {"Org": "COL", "pitcher_seasons": 41.0, "pitchers_unique": 33.0, "total_ip": 3931.333, "mean_ip": 95.886, "median_ip": 99.333, "total_pitches": 64604.0, "pitches_per_ip": 16.433, "ip_per_pitch": 0.061}, {"Org": "CWS", "pitcher_seasons": 29.0, "pitchers_unique": 22.0, "total_ip": 2651.333, "mean_ip": 91.425, "median_ip": 88.333, "total_pitches": 43476.0, "pitches_per_ip": 16.398, "ip_per_pitch": 0.061}, {"Org": "DET", "pitcher_seasons": 20.0, "pitchers_unique": 14.0, "total_ip": 1677.0, "mean_ip": 83.85, "median_ip": 88.5, "total_pitches": 26680.0, "pitches_per_ip": 15.909, "ip_per_pitch": 0.063}, {"Org": "HOU", "pitcher_seasons": 33.0, "pitchers_unique": 27.0, "total_ip": 2899.0, "mean_ip": 87.848, "median_ip": 87.333, "total_pitches": 49899.0, "pitches_per_ip": 17.212, "ip_per_pitch": 0.058}, {"Org": "KC", "pitcher_seasons": 31.0, "pitchers_unique": 20.0, "total_ip": 2795.667, "mean_ip": 90.183, "median_ip": 93.0, "total_pitches": 44327.0, "pitches_per_ip": 15.856, "ip_per_pitch": 0.063}, {"Org": "LAA", "pitcher_seasons": 32.0, "pitchers_unique": 23.0, "total_ip": 3058.0, "mean_ip": 95.562, "median_ip": 94.0, "total_pitches": 52562.0, "pitches_per_ip": 17.188, "ip_per_pitch": 0.058}, {"Org": "LAD", "pitcher_seasons": 27.0, "pitchers_unique": 19.0, "total_ip": 2402.333, "mean_ip": 88.975, "median_ip": 86.0, "total_pitches": 39952.0, "pitches_per_ip": 16.63, "ip_per_pitch": 0.06}, {"Org": "MIA", "pitcher_seasons": 26.0, "pitchers_unique": 16.0, "total_ip": 2274.333, "mean_ip": 87.474, "median_ip": 89.833, "total_pitches": 38236.0, "pitches_per_ip": 16.812, "ip_per_pitch": 0.059}, {"Org": "MIL", "pitcher_seasons": 38.0, "pitchers_unique": 29.0, "total_ip": 3356.333, "mean_ip": 88.325, "median_ip": 87.167, "total_pitches": 54225.0, "pitches_per_ip": 16.156, "ip_per_pitch": 0.062}, {"Org": "MIN", "pitcher_seasons": 30.0, "pitchers_unique": 26.0, "total_ip": 2601.0, "mean_ip": 86.7, "median_ip": 84.5, "total_pitches": 43276.0, "pitches_per_ip": 16.638, "ip_per_pitch": 0.06}, {"Org": "NYM", "pitcher_seasons": 27.0, "pitchers_unique": 22.0, "total_ip": 2431.0, "mean_ip": 90.037, "median_ip": 89.333, "total_pitches": 40307.0, "pitches_per_ip": 16.58, "ip_per_pitch": 0.06}, {"Org": "NYY", "pitcher_seasons": 21.0, "pitchers_unique": 19.0, "total_ip": 2060.333, "mean_ip": 98.111, "median_ip": 93.667, "total_pitches": 33625.0, "pitches_per_ip": 16.32, "ip_per_pitch": 0.061}, {"Org": "PHI", "pitcher_seasons": 24.0, "pitchers_unique": 19.0, "total_ip": 2053.0, "mean_ip": 85.542, "median_ip": 81.167, "total_pitches": 34673.0, "pitches_per_ip": 16.889, "ip_per_pitch": 0.059}, {"Org": "PIT", "pitcher_seasons": 34.0, "pitchers_unique": 23.0, "total_ip": 3221.667, "mean_ip": 94.755, "median_ip": 93.5, "total_pitches": 52864.0, "pitches_per_ip": 16.409, "ip_per_pitch": 0.061}, {"Org": "SD", "pitcher_seasons": 29.0, "pitchers_unique": 22.0, "total_ip": 2619.667, "mean_ip": 90.333, "median_ip": 91.667, "total_pitches": 43524.0, "pitches_per_ip": 16.614, "ip_per_pitch": 0.06}, {"Org": "SEA", "pitcher_seasons": 16.0, "pitchers_unique": 13.0, "total_ip": 1570.667, "mean_ip": 98.167, "median_ip": 99.833, "total_pitches": 24847.0, "pitches_per_ip": 15.819, "ip_per_pitch": 0.063}, {"Org": "SF", "pitcher_seasons": 27.0, "pitchers_unique": 22.0, "total_ip": 2243.667, "mean_ip": 83.099, "median_ip": 81.333, "total_pitches": 36952.0, "pitches_per_ip": 16.469, "ip_per_pitch": 0.061}, {"Org": "STL", "pitcher_seasons": 35.0, "pitchers_unique": 25.0, "total_ip": 3430.667, "mean_ip": 98.019, "median_ip": 96.667, "total_pitches": 55964.0, "pitches_per_ip": 16.313, "ip_per_pitch": 0.061}, {"Org": "TB", "pitcher_seasons": 31.0, "pitchers_unique": 26.0, "total_ip": 3029.667, "mean_ip": 97.731, "median_ip": 102.333, "total_pitches": 48102.0, "pitches_per_ip": 15.877, "ip_per_pitch": 0.063}, {"Org": "TEX", "pitcher_seasons": 32.0, "pitchers_unique": 24.0, "total_ip": 2713.333, "mean_ip": 84.792, "median_ip": 87.833, "total_pitches": 43703.0, "pitches_per_ip": 16.107, "ip_per_pitch": 0.062}, {"Org": "TOR", "pitcher_seasons": 25.0, "pitchers_unique": 22.0, "total_ip": 2172.333, "mean_ip": 86.893, "median_ip": 85.333, "total_pitches": 35933.0, "pitches_per_ip": 16.541, "ip_per_pitch": 0.06}, {"Org": "WSH", "pitcher_seasons": 26.0, "pitchers_unique": 22.0, "total_ip": 2429.0, "mean_ip": 93.423, "median_ip": 94.5, "total_pitches": 39126.0, "pitches_per_ip": 16.108, "ip_per_pitch": 0.062}];
+const orgAge = [{"Org": "ATH", "Age": 19.0, "n": 2.0, "pitchers_unique": 2.0, "total_ip": 191.0, "mean_ip": 95.5, "median_ip": 95.5, "min_ip": 87.0, "q1_ip": 91.25, "q3_ip": 99.75, "max_ip": 104.0, "total_pitches": 3071.0, "range_ip": 17.0, "iqr_ip": 8.5, "pitches_per_ip": 16.079, "ip_per_pitch": 0.062}, {"Org": "ATH", "Age": 20.0, "n": 3.0, "pitchers_unique": 3.0, "total_ip": 241.333, "mean_ip": 80.444, "median_ip": 85.333, "min_ip": 69.0, "q1_ip": 77.167, "q3_ip": 86.167, "max_ip": 87.0, "total_pitches": 4267.0, "range_ip": 18.0, "iqr_ip": 9.0, "pitches_per_ip": 17.681, "ip_per_pitch": 0.057}, {"Org": "ATH", "Age": 21.0, "n": 5.0, "pitchers_unique": 5.0, "total_ip": 461.667, "mean_ip": 92.333, "median_ip": 81.0, "min_ip": 65.333, "q1_ip": 78.667, "q3_ip": 99.667, "max_ip": 137.0, "total_pitches": 7624.0, "range_ip": 71.667, "iqr_ip": 21.0, "pitches_per_ip": 16.514, "ip_per_pitch": 0.061}, {"Org": "ATH", "Age": 22.0, "n": 18.0, "pitchers_unique": 18.0, "total_ip": 1678.667, "mean_ip": 93.259, "median_ip": 89.167, "min_ip": 63.0, "q1_ip": 77.75, "q3_ip": 108.75, "max_ip": 136.0, "total_pitches": 27760.0, "range_ip": 73.0, "iqr_ip": 31.0, "pitches_per_ip": 16.537, "ip_per_pitch": 0.06}, {"Org": "ATL", "Age": 18.0, "n": 2.0, "pitchers_unique": 2.0, "total_ip": 130.333, "mean_ip": 65.167, "median_ip": 65.167, "min_ip": 60.333, "q1_ip": 62.75, "q3_ip": 67.583, "max_ip": 70.0, "total_pitches": 2186.0, "range_ip": 9.667, "iqr_ip": 4.833, "pitches_per_ip": 16.772, "ip_per_pitch": 0.06}, {"Org": "ATL", "Age": 19.0, "n": 5.0, "pitchers_unique": 5.0, "total_ip": 434.0, "mean_ip": 86.8, "median_ip": 89.667, "min_ip": 75.667, "q1_ip": 76.333, "q3_ip": 93.333, "max_ip": 99.0, "total_pitches": 6955.0, "range_ip": 23.333, "iqr_ip": 17.0, "pitches_per_ip": 16.025, "ip_per_pitch": 0.062}, {"Org": "ATL", "Age": 20.0, "n": 5.0, "pitchers_unique": 5.0, "total_ip": 393.333, "mean_ip": 78.667, "median_ip": 68.333, "min_ip": 62.0, "q1_ip": 68.0, "q3_ip": 81.333, "max_ip": 113.667, "total_pitches": 6593.0, "range_ip": 51.667, "iqr_ip": 13.333, "pitches_per_ip": 16.762, "ip_per_pitch": 0.06}, {"Org": "ATL", "Age": 21.0, "n": 5.0, "pitchers_unique": 5.0, "total_ip": 458.333, "mean_ip": 91.667, "median_ip": 89.0, "min_ip": 82.667, "q1_ip": 86.667, "q3_ip": 96.667, "max_ip": 103.333, "total_pitches": 7848.0, "range_ip": 20.667, "iqr_ip": 10.0, "pitches_per_ip": 17.123, "ip_per_pitch": 0.058}, {"Org": "ATL", "Age": 22.0, "n": 13.0, "pitchers_unique": 13.0, "total_ip": 1273.667, "mean_ip": 97.974, "median_ip": 93.333, "min_ip": 64.667, "q1_ip": 72.333, "q3_ip": 127.0, "max_ip": 143.667, "total_pitches": 20489.0, "range_ip": 79.0, "iqr_ip": 54.667, "pitches_per_ip": 16.087, "ip_per_pitch": 0.062}, {"Org": "AZ", "Age": 19.0, "n": 4.0, "pitchers_unique": 4.0, "total_ip": 297.333, "mean_ip": 74.333, "median_ip": 66.167, "min_ip": 60.0, "q1_ip": 63.0, "q3_ip": 77.5, "max_ip": 105.0, "total_pitches": 4639.0, "range_ip": 45.0, "iqr_ip": 14.5, "pitches_per_ip": 15.602, "ip_per_pitch": 0.064}, {"Org": "AZ", "Age": 20.0, "n": 7.0, "pitchers_unique": 7.0, "total_ip": 662.667, "mean_ip": 94.667, "median_ip": 96.333, "min_ip": 63.333, "q1_ip": 81.333, "q3_ip": 109.5, "max_ip": 121.333, "total_pitches": 10943.0, "range_ip": 58.0, "iqr_ip": 28.167, "pitches_per_ip": 16.514, "ip_per_pitch": 0.061}, {"Org": "AZ", "Age": 21.0, "n": 14.0, "pitchers_unique": 14.0, "total_ip": 1241.667, "mean_ip": 88.69, "median_ip": 82.833, "min_ip": 61.0, "q1_ip": 71.583, "q3_ip": 106.583, "max_ip": 135.333, "total_pitches": 20445.0, "range_ip": 74.333, "iqr_ip": 35.0, "pitches_per_ip": 16.466, "ip_per_pitch": 0.061}, {"Org": "AZ", "Age": 22.0, "n": 12.0, "pitchers_unique": 12.0, "total_ip": 1216.333, "mean_ip": 101.361, "median_ip": 102.167, "min_ip": 66.0, "q1_ip": 79.0, "q3_ip": 117.083, "max_ip": 149.333, "total_pitches": 20706.0, "range_ip": 83.333, "iqr_ip": 38.083, "pitches_per_ip": 17.023, "ip_per_pitch": 0.059}, {"Org": "BAL", "Age": 19.0, "n": 2.0, "pitchers_unique": 2.0, "total_ip": 184.0, "mean_ip": 92.0, "median_ip": 92.0, "min_ip": 87.0, "q1_ip": 89.5, "q3_ip": 94.5, "max_ip": 97.0, "total_pitches": 3108.0, "range_ip": 10.0, "iqr_ip": 5.0, "pitches_per_ip": 16.891, "ip_per_pitch": 0.059}, {"Org": "BAL", "Age": 20.0, "n": 5.0, "pitchers_unique": 5.0, "total_ip": 406.0, "mean_ip": 81.2, "median_ip": 84.333, "min_ip": 62.0, "q1_ip": 68.0, "q3_ip": 92.0, "max_ip": 99.667, "total_pitches": 6943.0, "range_ip": 37.667, "iqr_ip": 24.0, "pitches_per_ip": 17.101, "ip_per_pitch": 0.058}, {"Org": "BAL", "Age": 21.0, "n": 7.0, "pitchers_unique": 7.0, "total_ip": 563.0, "mean_ip": 80.429, "median_ip": 85.333, "min_ip": 64.667, "q1_ip": 70.5, "q3_ip": 88.833, "max_ip": 94.333, "total_pitches": 9439.0, "range_ip": 29.667, "iqr_ip": 18.333, "pitches_per_ip": 16.766, "ip_per_pitch": 0.06}, {"Org": "BAL", "Age": 22.0, "n": 18.0, "pitchers_unique": 18.0, "total_ip": 1600.0, "mean_ip": 88.889, "median_ip": 90.0, "min_ip": 60.333, "q1_ip": 81.667, "q3_ip": 99.667, "max_ip": 119.333, "total_pitches": 26972.0, "range_ip": 59.0, "iqr_ip": 18.0, "pitches_per_ip": 16.858, "ip_per_pitch": 0.059}, {"Org": "BOS", "Age": 18.0, "n": 3.0, "pitchers_unique": 3.0, "total_ip": 200.0, "mean_ip": 66.667, "median_ip": 64.667, "min_ip": 63.333, "q1_ip": 64.0, "q3_ip": 68.333, "max_ip": 72.0, "total_pitches": 3186.0, "range_ip": 8.667, "iqr_ip": 4.333, "pitches_per_ip": 15.93, "ip_per_pitch": 0.063}, {"Org": "BOS", "Age": 19.0, "n": 2.0, "pitchers_unique": 2.0, "total_ip": 164.667, "mean_ip": 82.333, "median_ip": 82.333, "min_ip": 80.333, "q1_ip": 81.333, "q3_ip": 83.333, "max_ip": 84.333, "total_pitches": 2732.0, "range_ip": 4.0, "iqr_ip": 2.0, "pitches_per_ip": 16.591, "ip_per_pitch": 0.06}, {"Org": "BOS", "Age": 20.0, "n": 4.0, "pitchers_unique": 4.0, "total_ip": 341.667, "mean_ip": 85.417, "median_ip": 89.667, "min_ip": 65.667, "q1_ip": 83.667, "q3_ip": 91.417, "max_ip": 96.667, "total_pitches": 5370.0, "range_ip": 31.0, "iqr_ip": 7.75, "pitches_per_ip": 15.717, "ip_per_pitch": 0.064}, {"Org": "BOS", "Age": 21.0, "n": 5.0, "pitchers_unique": 5.0, "total_ip": 475.0, "mean_ip": 95.0, "median_ip": 98.0, "min_ip": 70.333, "q1_ip": 76.0, "q3_ip": 111.333, "max_ip": 119.333, "total_pitches": 8031.0, "range_ip": 49.0, "iqr_ip": 35.333, "pitches_per_ip": 16.907, "ip_per_pitch": 0.059}, {"Org": "BOS", "Age": 22.0, "n": 17.0, "pitchers_unique": 17.0, "total_ip": 1495.0, "mean_ip": 87.941, "median_ip": 91.0, "min_ip": 62.667, "q1_ip": 64.333, "q3_ip": 98.667, "max_ip": 124.667, "total_pitches": 24491.0, "range_ip": 62.0, "iqr_ip": 34.333, "pitches_per_ip": 16.382, "ip_per_pitch": 0.061}, {"Org": "CHC", "Age": 20.0, "n": 4.0, "pitchers_unique": 4.0, "total_ip": 316.333, "mean_ip": 79.083, "median_ip": 79.833, "min_ip": 67.0, "q1_ip": 75.5, "q3_ip": 83.417, "max_ip": 89.667, "total_pitches": 5065.0, "range_ip": 22.667, "iqr_ip": 7.917, "pitches_per_ip": 16.012, "ip_per_pitch": 0.062}, {"Org": "CHC", "Age": 21.0, "n": 8.0, "pitchers_unique": 8.0, "total_ip": 625.667, "mean_ip": 78.208, "median_ip": 78.0, "min_ip": 61.0, "q1_ip": 74.083, "q3_ip": 83.083, "max_ip": 92.667, "total_pitches": 10782.0, "range_ip": 31.667, "iqr_ip": 9.0, "pitches_per_ip": 17.233, "ip_per_pitch": 0.058}, {"Org": "CHC", "Age": 22.0, "n": 7.0, "pitchers_unique": 7.0, "total_ip": 573.0, "mean_ip": 81.857, "median_ip": 80.667, "min_ip": 62.333, "q1_ip": 74.0, "q3_ip": 91.833, "max_ip": 98.333, "total_pitches": 9842.0, "range_ip": 36.0, "iqr_ip": 17.833, "pitches_per_ip": 17.176, "ip_per_pitch": 0.058}, {"Org": "CIN", "Age": 19.0, "n": 1.0, "pitchers_unique": 1.0, "total_ip": 60.333, "mean_ip": 60.333, "median_ip": 60.333, "min_ip": 60.333, "q1_ip": 60.333, "q3_ip": 60.333, "max_ip": 60.333, "total_pitches": 994.0, "range_ip": 0.0, "iqr_ip": 0.0, "pitches_per_ip": 16.475, "ip_per_pitch": 0.061}, {"Org": "CIN", "Age": 20.0, "n": 5.0, "pitchers_unique": 5.0, "total_ip": 394.0, "mean_ip": 78.8, "median_ip": 78.333, "min_ip": 61.333, "q1_ip": 68.0, "q3_ip": 85.667, "max_ip": 100.667, "total_pitches": 6711.0, "range_ip": 39.333, "iqr_ip": 17.667, "pitches_per_ip": 17.033, "ip_per_pitch": 0.059}, {"Org": "CIN", "Age": 21.0, "n": 5.0, "pitchers_unique": 5.0, "total_ip": 473.333, "mean_ip": 94.667, "median_ip": 91.333, "min_ip": 69.0, "q1_ip": 80.0, "q3_ip": 96.0, "max_ip": 137.0, "total_pitches": 7617.0, "range_ip": 68.0, "iqr_ip": 16.0, "pitches_per_ip": 16.092, "ip_per_pitch": 0.062}, {"Org": "CIN", "Age": 22.0, "n": 13.0, "pitchers_unique": 13.0, "total_ip": 1239.0, "mean_ip": 95.308, "median_ip": 96.333, "min_ip": 66.0, "q1_ip": 81.333, "q3_ip": 105.0, "max_ip": 125.0, "total_pitches": 20466.0, "range_ip": 59.0, "iqr_ip": 23.667, "pitches_per_ip": 16.518, "ip_per_pitch": 0.061}, {"Org": "CLE", "Age": 19.0, "n": 3.0, "pitchers_unique": 3.0, "total_ip": 224.667, "mean_ip": 74.889, "median_ip": 79.0, "min_ip": 60.333, "q1_ip": 69.667, "q3_ip": 82.167, "max_ip": 85.333, "total_pitches": 3629.0, "range_ip": 25.0, "iqr_ip": 12.5, "pitches_per_ip": 16.153, "ip_per_pitch": 0.062}, {"Org": "CLE", "Age": 20.0, "n": 7.0, "pitchers_unique": 7.0, "total_ip": 641.667, "mean_ip": 91.667, "median_ip": 96.667, "min_ip": 65.333, "q1_ip": 69.833, "q3_ip": 108.0, "max_ip": 124.0, "total_pitches": 10903.0, "range_ip": 58.667, "iqr_ip": 38.167, "pitches_per_ip": 16.992, "ip_per_pitch": 0.059}, {"Org": "CLE", "Age": 21.0, "n": 4.0, "pitchers_unique": 4.0, "total_ip": 444.0, "mean_ip": 111.0, "median_ip": 116.333, "min_ip": 89.333, "q1_ip": 107.833, "q3_ip": 119.5, "max_ip": 122.0, "total_pitches": 6888.0, "range_ip": 32.667, "iqr_ip": 11.667, "pitches_per_ip": 15.514, "ip_per_pitch": 0.064}, {"Org": "CLE", "Age": 22.0, "n": 11.0, "pitchers_unique": 11.0, "total_ip": 1091.0, "mean_ip": 99.182, "median_ip": 103.667, "min_ip": 64.333, "q1_ip": 88.0, "q3_ip": 114.0, "max_ip": 121.667, "total_pitches": 17870.0, "range_ip": 57.333, "iqr_ip": 26.0, "pitches_per_ip": 16.379, "ip_per_pitch": 0.061}, {"Org": "COL", "Age": 19.0, "n": 1.0, "pitchers_unique": 1.0, "total_ip": 64.0, "mean_ip": 64.0, "median_ip": 64.0, "min_ip": 64.0, "q1_ip": 64.0, "q3_ip": 64.0, "max_ip": 64.0, "total_pitches": 1040.0, "range_ip": 0.0, "iqr_ip": 0.0, "pitches_per_ip": 16.25, "ip_per_pitch": 0.062}, {"Org": "COL", "Age": 20.0, "n": 7.0, "pitchers_unique": 7.0, "total_ip": 666.667, "mean_ip": 95.238, "median_ip": 100.667, "min_ip": 72.667, "q1_ip": 85.5, "q3_ip": 105.167, "max_ip": 112.0, "total_pitches": 11003.0, "range_ip": 39.333, "iqr_ip": 19.667, "pitches_per_ip": 16.504, "ip_per_pitch": 0.061}, {"Org": "COL", "Age": 21.0, "n": 12.0, "pitchers_unique": 12.0, "total_ip": 1165.333, "mean_ip": 97.111, "median_ip": 98.0, "min_ip": 66.667, "q1_ip": 84.333, "q3_ip": 112.083, "max_ip": 120.667, "total_pitches": 19061.0, "range_ip": 54.0, "iqr_ip": 27.75, "pitches_per_ip": 16.357, "ip_per_pitch": 0.061}, {"Org": "COL", "Age": 22.0, "n": 21.0, "pitchers_unique": 21.0, "total_ip": 2035.333, "mean_ip": 96.921, "median_ip": 99.333, "min_ip": 60.0, "q1_ip": 83.333, "q3_ip": 117.667, "max_ip": 140.0, "total_pitches": 33500.0, "range_ip": 80.0, "iqr_ip": 34.333, "pitches_per_ip": 16.459, "ip_per_pitch": 0.061}, {"Org": "CWS", "Age": 19.0, "n": 1.0, "pitchers_unique": 1.0, "total_ip": 87.0, "mean_ip": 87.0, "median_ip": 87.0, "min_ip": 87.0, "q1_ip": 87.0, "q3_ip": 87.0, "max_ip": 87.0, "total_pitches": 1385.0, "range_ip": 0.0, "iqr_ip": 0.0, "pitches_per_ip": 15.92, "ip_per_pitch": 0.063}, {"Org": "CWS", "Age": 20.0, "n": 5.0, "pitchers_unique": 5.0, "total_ip": 441.667, "mean_ip": 88.333, "median_ip": 87.667, "min_ip": 62.667, "q1_ip": 69.333, "q3_ip": 88.333, "max_ip": 133.667, "total_pitches": 7124.0, "range_ip": 71.0, "iqr_ip": 19.0, "pitches_per_ip": 16.13, "ip_per_pitch": 0.062}, {"Org": "CWS", "Age": 21.0, "n": 8.0, "pitchers_unique": 8.0, "total_ip": 674.333, "mean_ip": 84.292, "median_ip": 74.333, "min_ip": 65.0, "q1_ip": 71.167, "q3_ip": 96.917, "max_ip": 115.667, "total_pitches": 11590.0, "range_ip": 50.667, "iqr_ip": 25.75, "pitches_per_ip": 17.187, "ip_per_pitch": 0.058}, {"Org": "CWS", "Age": 22.0, "n": 15.0, "pitchers_unique": 15.0, "total_ip": 1448.333, "mean_ip": 96.556, "median_ip": 97.0, "min_ip": 62.0, "q1_ip": 82.5, "q3_ip": 110.167, "max_ip": 126.0, "total_pitches": 23377.0, "range_ip": 64.0, "iqr_ip": 27.667, "pitches_per_ip": 16.141, "ip_per_pitch": 0.062}, {"Org": "DET", "Age": 19.0, "n": 1.0, "pitchers_unique": 1.0, "total_ip": 68.667, "mean_ip": 68.667, "median_ip": 68.667, "min_ip": 68.667, "q1_ip": 68.667, "q3_ip": 68.667, "max_ip": 68.667, "total_pitches": 991.0, "range_ip": 0.0, "iqr_ip": 0.0, "pitches_per_ip": 14.432, "ip_per_pitch": 0.069}, {"Org": "DET", "Age": 20.0, "n": 6.0, "pitchers_unique": 6.0, "total_ip": 451.0, "mean_ip": 75.167, "median_ip": 67.167, "min_ip": 63.0, "q1_ip": 64.0, "q3_ip": 84.833, "max_ip": 100.0, "total_pitches": 7021.0, "range_ip": 37.0, "iqr_ip": 20.833, "pitches_per_ip": 15.568, "ip_per_pitch": 0.064}, {"Org": "DET", "Age": 21.0, "n": 6.0, "pitchers_unique": 6.0, "total_ip": 556.667, "mean_ip": 92.778, "median_ip": 95.167, "min_ip": 65.667, "q1_ip": 90.167, "q3_ip": 98.917, "max_ip": 112.0, "total_pitches": 9161.0, "range_ip": 46.333, "iqr_ip": 8.75, "pitches_per_ip": 16.457, "ip_per_pitch": 0.061}, {"Org": "DET", "Age": 22.0, "n": 7.0, "pitchers_unique": 7.0, "total_ip": 600.667, "mean_ip": 85.81, "median_ip": 88.0, "min_ip": 64.0, "q1_ip": 78.333, "q3_ip": 90.5, "max_ip": 111.0, "total_pitches": 9507.0, "range_ip": 47.0, "iqr_ip": 12.167, "pitches_per_ip": 15.827, "ip_per_pitch": 0.063}, {"Org": "HOU", "Age": 19.0, "n": 1.0, "pitchers_unique": 1.0, "total_ip": 82.667, "mean_ip": 82.667, "median_ip": 82.667, "min_ip": 82.667, "q1_ip": 82.667, "q3_ip": 82.667, "max_ip": 82.667, "total_pitches": 1651.0, "range_ip": 0.0, "iqr_ip": 0.0, "pitches_per_ip": 19.972, "ip_per_pitch": 0.05}, {"Org": "HOU", "Age": 20.0, "n": 5.0, "pitchers_unique": 5.0, "total_ip": 412.667, "mean_ip": 82.533, "median_ip": 87.333, "min_ip": 61.667, "q1_ip": 70.333, "q3_ip": 92.667, "max_ip": 100.667, "total_pitches": 7191.0, "range_ip": 39.0, "iqr_ip": 22.333, "pitches_per_ip": 17.426, "ip_per_pitch": 0.057}, {"Org": "HOU", "Age": 21.0, "n": 16.0, "pitchers_unique": 16.0, "total_ip": 1314.667, "mean_ip": 82.167, "median_ip": 83.5, "min_ip": 60.0, "q1_ip": 67.917, "q3_ip": 95.25, "max_ip": 105.333, "total_pitches": 23137.0, "range_ip": 45.333, "iqr_ip": 27.333, "pitches_per_ip": 17.599, "ip_per_pitch": 0.057}, {"Org": "HOU", "Age": 22.0, "n": 11.0, "pitchers_unique": 11.0, "total_ip": 1089.0, "mean_ip": 99.0, "median_ip": 103.333, "min_ip": 66.667, "q1_ip": 75.667, "q3_ip": 117.5, "max_ip": 130.333, "total_pitches": 17920.0, "range_ip": 63.667, "iqr_ip": 41.833, "pitches_per_ip": 16.455, "ip_per_pitch": 0.061}, {"Org": "KC", "Age": 18.0, "n": 1.0, "pitchers_unique": 1.0, "total_ip": 75.667, "mean_ip": 75.667, "median_ip": 75.667, "min_ip": 75.667, "q1_ip": 75.667, "q3_ip": 75.667, "max_ip": 75.667, "total_pitches": 1196.0, "range_ip": 0.0, "iqr_ip": 0.0, "pitches_per_ip": 15.806, "ip_per_pitch": 0.063}, {"Org": "KC", "Age": 19.0, "n": 2.0, "pitchers_unique": 2.0, "total_ip": 130.333, "mean_ip": 65.167, "median_ip": 65.167, "min_ip": 60.667, "q1_ip": 62.917, "q3_ip": 67.417, "max_ip": 69.667, "total_pitches": 2023.0, "range_ip": 9.0, "iqr_ip": 4.5, "pitches_per_ip": 15.522, "ip_per_pitch": 0.064}, {"Org": "KC", "Age": 20.0, "n": 4.0, "pitchers_unique": 4.0, "total_ip": 387.667, "mean_ip": 96.917, "median_ip": 100.0, "min_ip": 79.0, "q1_ip": 89.5, "q3_ip": 107.417, "max_ip": 108.667, "total_pitches": 6292.0, "range_ip": 29.667, "iqr_ip": 17.917, "pitches_per_ip": 16.23, "ip_per_pitch": 0.062}, {"Org": "KC", "Age": 21.0, "n": 10.0, "pitchers_unique": 10.0, "total_ip": 901.667, "mean_ip": 90.167, "median_ip": 97.667, "min_ip": 63.333, "q1_ip": 69.833, "q3_ip": 106.917, "max_ip": 115.333, "total_pitches": 14288.0, "range_ip": 52.0, "iqr_ip": 37.083, "pitches_per_ip": 15.846, "ip_per_pitch": 0.063}, {"Org": "KC", "Age": 22.0, "n": 14.0, "pitchers_unique": 14.0, "total_ip": 1300.333, "mean_ip": 92.881, "median_ip": 91.833, "min_ip": 62.667, "q1_ip": 71.167, "q3_ip": 104.667, "max_ip": 131.667, "total_pitches": 20528.0, "range_ip": 69.0, "iqr_ip": 33.5, "pitches_per_ip": 15.787, "ip_per_pitch": 0.063}, {"Org": "LAA", "Age": 19.0, "n": 9.0, "pitchers_unique": 9.0, "total_ip": 775.333, "mean_ip": 86.148, "median_ip": 78.667, "min_ip": 66.333, "q1_ip": 73.667, "q3_ip": 98.667, "max_ip": 113.0, "total_pitches": 13268.0, "range_ip": 46.667, "iqr_ip": 25.0, "pitches_per_ip": 17.113, "ip_per_pitch": 0.058}, {"Org": "LAA", "Age": 20.0, "n": 6.0, "pitchers_unique": 6.0, "total_ip": 642.333, "mean_ip": 107.056, "median_ip": 106.833, "min_ip": 77.333, "q1_ip": 96.333, "q3_ip": 118.833, "max_ip": 135.667, "total_pitches": 10976.0, "range_ip": 58.333, "iqr_ip": 22.5, "pitches_per_ip": 17.088, "ip_per_pitch": 0.059}, {"Org": "LAA", "Age": 21.0, "n": 6.0, "pitchers_unique": 6.0, "total_ip": 575.0, "mean_ip": 95.833, "median_ip": 85.0, "min_ip": 81.667, "q1_ip": 82.417, "q3_ip": 96.833, "max_ip": 141.0, "total_pitches": 10350.0, "range_ip": 59.333, "iqr_ip": 14.417, "pitches_per_ip": 18.0, "ip_per_pitch": 0.056}, {"Org": "LAA", "Age": 22.0, "n": 11.0, "pitchers_unique": 11.0, "total_ip": 1065.333, "mean_ip": 96.848, "median_ip": 94.0, "min_ip": 78.0, "q1_ip": 88.333, "q3_ip": 100.833, "max_ip": 128.667, "total_pitches": 17968.0, "range_ip": 50.667, "iqr_ip": 12.5, "pitches_per_ip": 16.866, "ip_per_pitch": 0.059}, {"Org": "LAD", "Age": 19.0, "n": 2.0, "pitchers_unique": 2.0, "total_ip": 141.0, "mean_ip": 70.5, "median_ip": 70.5, "min_ip": 70.0, "q1_ip": 70.25, "q3_ip": 70.75, "max_ip": 71.0, "total_pitches": 2322.0, "range_ip": 1.0, "iqr_ip": 0.5, "pitches_per_ip": 16.468, "ip_per_pitch": 0.061}, {"Org": "LAD", "Age": 20.0, "n": 8.0, "pitchers_unique": 8.0, "total_ip": 677.0, "mean_ip": 84.625, "median_ip": 80.333, "min_ip": 67.333, "q1_ip": 72.25, "q3_ip": 87.333, "max_ip": 126.667, "total_pitches": 10954.0, "range_ip": 59.333, "iqr_ip": 15.083, "pitches_per_ip": 16.18, "ip_per_pitch": 0.062}, {"Org": "LAD", "Age": 21.0, "n": 8.0, "pitchers_unique": 8.0, "total_ip": 801.0, "mean_ip": 100.125, "median_ip": 98.333, "min_ip": 81.333, "q1_ip": 91.833, "q3_ip": 104.417, "max_ip": 126.0, "total_pitches": 13671.0, "range_ip": 44.667, "iqr_ip": 12.583, "pitches_per_ip": 17.067, "ip_per_pitch": 0.059}, {"Org": "LAD", "Age": 22.0, "n": 9.0, "pitchers_unique": 9.0, "total_ip": 783.333, "mean_ip": 87.037, "median_ip": 86.0, "min_ip": 66.333, "q1_ip": 79.667, "q3_ip": 94.0, "max_ip": 108.667, "total_pitches": 13005.0, "range_ip": 42.333, "iqr_ip": 14.333, "pitches_per_ip": 16.602, "ip_per_pitch": 0.06}, {"Org": "MIA", "Age": 18.0, "n": 1.0, "pitchers_unique": 1.0, "total_ip": 69.667, "mean_ip": 69.667, "median_ip": 69.667, "min_ip": 69.667, "q1_ip": 69.667, "q3_ip": 69.667, "max_ip": 69.667, "total_pitches": 1103.0, "range_ip": 0.0, "iqr_ip": 0.0, "pitches_per_ip": 15.833, "ip_per_pitch": 0.063}, {"Org": "MIA", "Age": 19.0, "n": 8.0, "pitchers_unique": 8.0, "total_ip": 598.333, "mean_ip": 74.792, "median_ip": 71.0, "min_ip": 62.0, "q1_ip": 64.75, "q3_ip": 79.333, "max_ip": 96.0, "total_pitches": 10163.0, "range_ip": 34.0, "iqr_ip": 14.583, "pitches_per_ip": 16.986, "ip_per_pitch": 0.059}, {"Org": "MIA", "Age": 20.0, "n": 9.0, "pitchers_unique": 9.0, "total_ip": 859.333, "mean_ip": 95.481, "median_ip": 97.667, "min_ip": 65.333, "q1_ip": 89.667, "q3_ip": 101.0, "max_ip": 115.333, "total_pitches": 14474.0, "range_ip": 50.0, "iqr_ip": 11.333, "pitches_per_ip": 16.843, "ip_per_pitch": 0.059}, {"Org": "MIA", "Age": 21.0, "n": 4.0, "pitchers_unique": 4.0, "total_ip": 410.333, "mean_ip": 102.583, "median_ip": 103.833, "min_ip": 66.667, "q1_ip": 84.167, "q3_ip": 122.25, "max_ip": 136.0, "total_pitches": 6886.0, "range_ip": 69.333, "iqr_ip": 38.083, "pitches_per_ip": 16.781, "ip_per_pitch": 0.06}, {"Org": "MIA", "Age": 22.0, "n": 4.0, "pitchers_unique": 4.0, "total_ip": 336.667, "mean_ip": 84.167, "median_ip": 83.833, "min_ip": 64.333, "q1_ip": 64.833, "q3_ip": 103.167, "max_ip": 104.667, "total_pitches": 5610.0, "range_ip": 40.333, "iqr_ip": 38.333, "pitches_per_ip": 16.663, "ip_per_pitch": 0.06}, {"Org": "MIL", "Age": 18.0, "n": 5.0, "pitchers_unique": 5.0, "total_ip": 407.0, "mean_ip": 81.4, "median_ip": 82.0, "min_ip": 72.667, "q1_ip": 73.333, "q3_ip": 84.333, "max_ip": 94.667, "total_pitches": 6371.0, "range_ip": 22.0, "iqr_ip": 11.0, "pitches_per_ip": 15.654, "ip_per_pitch": 0.064}, {"Org": "MIL", "Age": 19.0, "n": 8.0, "pitchers_unique": 8.0, "total_ip": 649.667, "mean_ip": 81.208, "median_ip": 76.333, "min_ip": 63.333, "q1_ip": 70.167, "q3_ip": 84.167, "max_ip": 121.667, "total_pitches": 10128.0, "range_ip": 58.333, "iqr_ip": 14.0, "pitches_per_ip": 15.59, "ip_per_pitch": 0.064}, {"Org": "MIL", "Age": 20.0, "n": 4.0, "pitchers_unique": 4.0, "total_ip": 364.0, "mean_ip": 91.0, "median_ip": 89.667, "min_ip": 86.0, "q1_ip": 87.75, "q3_ip": 92.917, "max_ip": 98.667, "total_pitches": 5972.0, "range_ip": 12.667, "iqr_ip": 5.167, "pitches_per_ip": 16.407, "ip_per_pitch": 0.061}, {"Org": "MIL", "Age": 21.0, "n": 9.0, "pitchers_unique": 9.0, "total_ip": 806.333, "mean_ip": 89.593, "median_ip": 89.0, "min_ip": 61.0, "q1_ip": 78.667, "q3_ip": 90.0, "max_ip": 128.333, "total_pitches": 13303.0, "range_ip": 67.333, "iqr_ip": 11.333, "pitches_per_ip": 16.498, "ip_per_pitch": 0.061}, {"Org": "MIL", "Age": 22.0, "n": 12.0, "pitchers_unique": 12.0, "total_ip": 1129.333, "mean_ip": 94.111, "median_ip": 99.667, "min_ip": 63.0, "q1_ip": 81.167, "q3_ip": 102.667, "max_ip": 129.667, "total_pitches": 18451.0, "range_ip": 66.667, "iqr_ip": 21.5, "pitches_per_ip": 16.338, "ip_per_pitch": 0.061}, {"Org": "MIN", "Age": 18.0, "n": 1.0, "pitchers_unique": 1.0, "total_ip": 74.0, "mean_ip": 74.0, "median_ip": 74.0, "min_ip": 74.0, "q1_ip": 74.0, "q3_ip": 74.0, "max_ip": 74.0, "total_pitches": 1245.0, "range_ip": 0.0, "iqr_ip": 0.0, "pitches_per_ip": 16.824, "ip_per_pitch": 0.059}, {"Org": "MIN", "Age": 19.0, "n": 1.0, "pitchers_unique": 1.0, "total_ip": 62.0, "mean_ip": 62.0, "median_ip": 62.0, "min_ip": 62.0, "q1_ip": 62.0, "q3_ip": 62.0, "max_ip": 62.0, "total_pitches": 1138.0, "range_ip": 0.0, "iqr_ip": 0.0, "pitches_per_ip": 18.355, "ip_per_pitch": 0.054}, {"Org": "MIN", "Age": 20.0, "n": 4.0, "pitchers_unique": 4.0, "total_ip": 294.0, "mean_ip": 73.5, "median_ip": 73.0, "min_ip": 62.667, "q1_ip": 69.167, "q3_ip": 77.333, "max_ip": 85.333, "total_pitches": 5114.0, "range_ip": 22.667, "iqr_ip": 8.167, "pitches_per_ip": 17.395, "ip_per_pitch": 0.057}, {"Org": "MIN", "Age": 21.0, "n": 4.0, "pitchers_unique": 4.0, "total_ip": 349.0, "mean_ip": 87.25, "median_ip": 85.167, "min_ip": 81.0, "q1_ip": 83.5, "q3_ip": 88.917, "max_ip": 97.667, "total_pitches": 5632.0, "range_ip": 16.667, "iqr_ip": 5.417, "pitches_per_ip": 16.138, "ip_per_pitch": 0.062}, {"Org": "MIN", "Age": 22.0, "n": 20.0, "pitchers_unique": 20.0, "total_ip": 1822.0, "mean_ip": 91.1, "median_ip": 88.333, "min_ip": 61.333, "q1_ip": 77.167, "q3_ip": 102.333, "max_ip": 133.0, "total_pitches": 30147.0, "range_ip": 71.667, "iqr_ip": 25.167, "pitches_per_ip": 16.546, "ip_per_pitch": 0.06}, {"Org": "NYM", "Age": 19.0, "n": 1.0, "pitchers_unique": 1.0, "total_ip": 82.0, "mean_ip": 82.0, "median_ip": 82.0, "min_ip": 82.0, "q1_ip": 82.0, "q3_ip": 82.0, "max_ip": 82.0, "total_pitches": 1332.0, "range_ip": 0.0, "iqr_ip": 0.0, "pitches_per_ip": 16.244, "ip_per_pitch": 0.062}, {"Org": "NYM", "Age": 20.0, "n": 9.0, "pitchers_unique": 9.0, "total_ip": 657.333, "mean_ip": 73.037, "median_ip": 71.667, "min_ip": 65.0, "q1_ip": 65.667, "q3_ip": 74.333, "max_ip": 94.333, "total_pitches": 11216.0, "range_ip": 29.333, "iqr_ip": 8.667, "pitches_per_ip": 17.063, "ip_per_pitch": 0.059}, {"Org": "NYM", "Age": 21.0, "n": 7.0, "pitchers_unique": 7.0, "total_ip": 682.333, "mean_ip": 97.476, "median_ip": 98.667, "min_ip": 71.333, "q1_ip": 93.167, "q3_ip": 106.5, "max_ip": 113.0, "total_pitches": 11151.0, "range_ip": 41.667, "iqr_ip": 13.333, "pitches_per_ip": 16.342, "ip_per_pitch": 0.061}, {"Org": "NYM", "Age": 22.0, "n": 10.0, "pitchers_unique": 10.0, "total_ip": 1009.333, "mean_ip": 100.933, "median_ip": 111.667, "min_ip": 67.667, "q1_ip": 81.583, "q3_ip": 115.75, "max_ip": 121.333, "total_pitches": 16608.0, "range_ip": 53.667, "iqr_ip": 34.167, "pitches_per_ip": 16.454, "ip_per_pitch": 0.061}, {"Org": "NYY", "Age": 19.0, "n": 1.0, "pitchers_unique": 1.0, "total_ip": 69.667, "mean_ip": 69.667, "median_ip": 69.667, "min_ip": 69.667, "q1_ip": 69.667, "q3_ip": 69.667, "max_ip": 69.667, "total_pitches": 1220.0, "range_ip": 0.0, "iqr_ip": 0.0, "pitches_per_ip": 17.512, "ip_per_pitch": 0.057}, {"Org": "NYY", "Age": 20.0, "n": 3.0, "pitchers_unique": 3.0, "total_ip": 314.667, "mean_ip": 104.889, "median_ip": 112.667, "min_ip": 74.333, "q1_ip": 93.5, "q3_ip": 120.167, "max_ip": 127.667, "total_pitches": 5095.0, "range_ip": 53.333, "iqr_ip": 26.667, "pitches_per_ip": 16.192, "ip_per_pitch": 0.062}, {"Org": "NYY", "Age": 21.0, "n": 8.0, "pitchers_unique": 8.0, "total_ip": 780.667, "mean_ip": 97.583, "median_ip": 85.0, "min_ip": 72.0, "q1_ip": 80.75, "q3_ip": 110.417, "max_ip": 150.0, "total_pitches": 12928.0, "range_ip": 78.0, "iqr_ip": 29.667, "pitches_per_ip": 16.56, "ip_per_pitch": 0.06}, {"Org": "NYY", "Age": 22.0, "n": 9.0, "pitchers_unique": 9.0, "total_ip": 895.333, "mean_ip": 99.481, "median_ip": 103.333, "min_ip": 65.333, "q1_ip": 82.667, "q3_ip": 120.0, "max_ip": 139.333, "total_pitches": 14382.0, "range_ip": 74.0, "iqr_ip": 37.333, "pitches_per_ip": 16.063, "ip_per_pitch": 0.062}, {"Org": "PHI", "Age": 18.0, "n": 1.0, "pitchers_unique": 1.0, "total_ip": 74.333, "mean_ip": 74.333, "median_ip": 74.333, "min_ip": 74.333, "q1_ip": 74.333, "q3_ip": 74.333, "max_ip": 74.333, "total_pitches": 1168.0, "range_ip": 0.0, "iqr_ip": 0.0, "pitches_per_ip": 15.713, "ip_per_pitch": 0.064}, {"Org": "PHI", "Age": 19.0, "n": 1.0, "pitchers_unique": 1.0, "total_ip": 75.0, "mean_ip": 75.0, "median_ip": 75.0, "min_ip": 75.0, "q1_ip": 75.0, "q3_ip": 75.0, "max_ip": 75.0, "total_pitches": 1196.0, "range_ip": 0.0, "iqr_ip": 0.0, "pitches_per_ip": 15.947, "ip_per_pitch": 0.063}, {"Org": "PHI", "Age": 20.0, "n": 2.0, "pitchers_unique": 2.0, "total_ip": 157.0, "mean_ip": 78.5, "median_ip": 78.5, "min_ip": 73.0, "q1_ip": 75.75, "q3_ip": 81.25, "max_ip": 84.0, "total_pitches": 2723.0, "range_ip": 11.0, "iqr_ip": 5.5, "pitches_per_ip": 17.344, "ip_per_pitch": 0.058}, {"Org": "PHI", "Age": 21.0, "n": 10.0, "pitchers_unique": 10.0, "total_ip": 831.0, "mean_ip": 83.1, "median_ip": 81.5, "min_ip": 64.667, "q1_ip": 77.583, "q3_ip": 88.417, "max_ip": 113.333, "total_pitches": 14032.0, "range_ip": 48.667, "iqr_ip": 10.833, "pitches_per_ip": 16.886, "ip_per_pitch": 0.059}, {"Org": "PHI", "Age": 22.0, "n": 10.0, "pitchers_unique": 10.0, "total_ip": 915.667, "mean_ip": 91.567, "median_ip": 81.5, "min_ip": 77.333, "q1_ip": 80.417, "q3_ip": 105.667, "max_ip": 118.0, "total_pitches": 15554.0, "range_ip": 40.667, "iqr_ip": 25.25, "pitches_per_ip": 16.987, "ip_per_pitch": 0.059}, {"Org": "PIT", "Age": 19.0, "n": 6.0, "pitchers_unique": 6.0, "total_ip": 451.0, "mean_ip": 75.167, "median_ip": 71.167, "min_ip": 65.0, "q1_ip": 65.833, "q3_ip": 81.25, "max_ip": 95.0, "total_pitches": 7385.0, "range_ip": 30.0, "iqr_ip": 15.417, "pitches_per_ip": 16.375, "ip_per_pitch": 0.061}, {"Org": "PIT", "Age": 20.0, "n": 7.0, "pitchers_unique": 7.0, "total_ip": 617.667, "mean_ip": 88.238, "median_ip": 80.0, "min_ip": 69.0, "q1_ip": 77.667, "q3_ip": 101.167, "max_ip": 111.0, "total_pitches": 10217.0, "range_ip": 42.0, "iqr_ip": 23.5, "pitches_per_ip": 16.541, "ip_per_pitch": 0.06}, {"Org": "PIT", "Age": 21.0, "n": 8.0, "pitchers_unique": 8.0, "total_ip": 858.667, "mean_ip": 107.333, "median_ip": 108.0, "min_ip": 70.333, "q1_ip": 104.833, "q3_ip": 119.667, "max_ip": 126.333, "total_pitches": 13932.0, "range_ip": 56.0, "iqr_ip": 14.833, "pitches_per_ip": 16.225, "ip_per_pitch": 0.062}, {"Org": "PIT", "Age": 22.0, "n": 13.0, "pitchers_unique": 13.0, "total_ip": 1294.333, "mean_ip": 99.564, "median_ip": 100.0, "min_ip": 70.667, "q1_ip": 76.0, "q3_ip": 119.667, "max_ip": 134.0, "total_pitches": 21330.0, "range_ip": 63.333, "iqr_ip": 43.667, "pitches_per_ip": 16.48, "ip_per_pitch": 0.061}, {"Org": "SD", "Age": 19.0, "n": 3.0, "pitchers_unique": 3.0, "total_ip": 286.0, "mean_ip": 95.333, "median_ip": 94.667, "min_ip": 87.667, "q1_ip": 91.167, "q3_ip": 99.167, "max_ip": 103.667, "total_pitches": 4577.0, "range_ip": 16.0, "iqr_ip": 8.0, "pitches_per_ip": 16.003, "ip_per_pitch": 0.062}, {"Org": "SD", "Age": 20.0, "n": 7.0, "pitchers_unique": 7.0, "total_ip": 557.333, "mean_ip": 79.619, "median_ip": 77.667, "min_ip": 60.667, "q1_ip": 73.5, "q3_ip": 86.833, "max_ip": 98.333, "total_pitches": 9250.0, "range_ip": 37.667, "iqr_ip": 13.333, "pitches_per_ip": 16.597, "ip_per_pitch": 0.06}, {"Org": "SD", "Age": 21.0, "n": 9.0, "pitchers_unique": 9.0, "total_ip": 936.667, "mean_ip": 104.074, "median_ip": 105.333, "min_ip": 77.333, "q1_ip": 93.0, "q3_ip": 110.667, "max_ip": 126.333, "total_pitches": 15367.0, "range_ip": 49.0, "iqr_ip": 17.667, "pitches_per_ip": 16.406, "ip_per_pitch": 0.061}, {"Org": "SD", "Age": 22.0, "n": 10.0, "pitchers_unique": 10.0, "total_ip": 839.667, "mean_ip": 83.967, "median_ip": 80.333, "min_ip": 60.333, "q1_ip": 67.667, "q3_ip": 94.917, "max_ip": 124.667, "total_pitches": 14330.0, "range_ip": 64.333, "iqr_ip": 27.25, "pitches_per_ip": 17.066, "ip_per_pitch": 0.059}, {"Org": "SEA", "Age": 19.0, "n": 2.0, "pitchers_unique": 2.0, "total_ip": 162.0, "mean_ip": 81.0, "median_ip": 81.0, "min_ip": 80.0, "q1_ip": 80.5, "q3_ip": 81.5, "max_ip": 82.0, "total_pitches": 2447.0, "range_ip": 2.0, "iqr_ip": 1.0, "pitches_per_ip": 15.105, "ip_per_pitch": 0.066}, {"Org": "SEA", "Age": 20.0, "n": 4.0, "pitchers_unique": 4.0, "total_ip": 433.0, "mean_ip": 108.25, "median_ip": 106.0, "min_ip": 95.667, "q1_ip": 99.917, "q3_ip": 114.333, "max_ip": 125.333, "total_pitches": 6800.0, "range_ip": 29.667, "iqr_ip": 14.417, "pitches_per_ip": 15.704, "ip_per_pitch": 0.064}, {"Org": "SEA", "Age": 21.0, "n": 4.0, "pitchers_unique": 4.0, "total_ip": 372.333, "mean_ip": 93.083, "median_ip": 79.5, "min_ip": 64.333, "q1_ip": 68.083, "q3_ip": 104.5, "max_ip": 149.0, "total_pitches": 5651.0, "range_ip": 84.667, "iqr_ip": 36.417, "pitches_per_ip": 15.177, "ip_per_pitch": 0.066}, {"Org": "SEA", "Age": 22.0, "n": 6.0, "pitchers_unique": 6.0, "total_ip": 603.333, "mean_ip": 100.556, "median_ip": 104.667, "min_ip": 70.667, "q1_ip": 99.167, "q3_ip": 108.167, "max_ip": 116.667, "total_pitches": 9949.0, "range_ip": 46.0, "iqr_ip": 9.0, "pitches_per_ip": 16.49, "ip_per_pitch": 0.061}, {"Org": "SF", "Age": 18.0, "n": 1.0, "pitchers_unique": 1.0, "total_ip": 62.333, "mean_ip": 62.333, "median_ip": 62.333, "min_ip": 62.333, "q1_ip": 62.333, "q3_ip": 62.333, "max_ip": 62.333, "total_pitches": 1013.0, "range_ip": 0.0, "iqr_ip": 0.0, "pitches_per_ip": 16.251, "ip_per_pitch": 0.062}, {"Org": "SF", "Age": 19.0, "n": 3.0, "pitchers_unique": 3.0, "total_ip": 195.0, "mean_ip": 65.0, "median_ip": 65.0, "min_ip": 60.333, "q1_ip": 62.667, "q3_ip": 67.333, "max_ip": 69.667, "total_pitches": 3390.0, "range_ip": 9.333, "iqr_ip": 4.667, "pitches_per_ip": 17.385, "ip_per_pitch": 0.058}, {"Org": "SF", "Age": 20.0, "n": 6.0, "pitchers_unique": 6.0, "total_ip": 527.333, "mean_ip": 87.889, "median_ip": 87.5, "min_ip": 69.333, "q1_ip": 81.5, "q3_ip": 94.75, "max_ip": 106.333, "total_pitches": 8697.0, "range_ip": 37.0, "iqr_ip": 13.25, "pitches_per_ip": 16.492, "ip_per_pitch": 0.061}, {"Org": "SF", "Age": 21.0, "n": 9.0, "pitchers_unique": 9.0, "total_ip": 745.0, "mean_ip": 82.778, "median_ip": 77.0, "min_ip": 60.0, "q1_ip": 67.667, "q3_ip": 100.667, "max_ip": 116.0, "total_pitches": 12216.0, "range_ip": 56.0, "iqr_ip": 33.0, "pitches_per_ip": 16.397, "ip_per_pitch": 0.061}, {"Org": "SF", "Age": 22.0, "n": 8.0, "pitchers_unique": 8.0, "total_ip": 714.0, "mean_ip": 89.25, "median_ip": 94.167, "min_ip": 62.333, "q1_ip": 66.667, "q3_ip": 104.083, "max_ip": 122.333, "total_pitches": 11636.0, "range_ip": 60.0, "iqr_ip": 37.417, "pitches_per_ip": 16.297, "ip_per_pitch": 0.061}, {"Org": "STL", "Age": 18.0, "n": 1.0, "pitchers_unique": 1.0, "total_ip": 79.0, "mean_ip": 79.0, "median_ip": 79.0, "min_ip": 79.0, "q1_ip": 79.0, "q3_ip": 79.0, "max_ip": 79.0, "total_pitches": 1153.0, "range_ip": 0.0, "iqr_ip": 0.0, "pitches_per_ip": 14.595, "ip_per_pitch": 0.069}, {"Org": "STL", "Age": 19.0, "n": 2.0, "pitchers_unique": 2.0, "total_ip": 173.333, "mean_ip": 86.667, "median_ip": 86.667, "min_ip": 65.333, "q1_ip": 76.0, "q3_ip": 97.333, "max_ip": 108.0, "total_pitches": 2835.0, "range_ip": 42.667, "iqr_ip": 21.333, "pitches_per_ip": 16.356, "ip_per_pitch": 0.061}, {"Org": "STL", "Age": 20.0, "n": 3.0, "pitchers_unique": 3.0, "total_ip": 260.333, "mean_ip": 86.778, "median_ip": 90.0, "min_ip": 74.333, "q1_ip": 82.167, "q3_ip": 93.0, "max_ip": 96.0, "total_pitches": 4442.0, "range_ip": 21.667, "iqr_ip": 10.833, "pitches_per_ip": 17.063, "ip_per_pitch": 0.059}, {"Org": "STL", "Age": 21.0, "n": 9.0, "pitchers_unique": 9.0, "total_ip": 946.333, "mean_ip": 105.148, "median_ip": 113.333, "min_ip": 66.333, "q1_ip": 79.667, "q3_ip": 123.333, "max_ip": 132.667, "total_pitches": 14795.0, "range_ip": 66.333, "iqr_ip": 43.667, "pitches_per_ip": 15.634, "ip_per_pitch": 0.064}, {"Org": "STL", "Age": 22.0, "n": 20.0, "pitchers_unique": 20.0, "total_ip": 1971.667, "mean_ip": 98.583, "median_ip": 96.833, "min_ip": 61.0, "q1_ip": 87.75, "q3_ip": 111.167, "max_ip": 132.667, "total_pitches": 32739.0, "range_ip": 71.667, "iqr_ip": 23.417, "pitches_per_ip": 16.605, "ip_per_pitch": 0.06}, {"Org": "TB", "Age": 18.0, "n": 3.0, "pitchers_unique": 3.0, "total_ip": 198.333, "mean_ip": 66.111, "median_ip": 65.0, "min_ip": 60.667, "q1_ip": 62.833, "q3_ip": 68.833, "max_ip": 72.667, "total_pitches": 3349.0, "range_ip": 12.0, "iqr_ip": 6.0, "pitches_per_ip": 16.886, "ip_per_pitch": 0.059}, {"Org": "TB", "Age": 19.0, "n": 4.0, "pitchers_unique": 4.0, "total_ip": 423.667, "mean_ip": 105.917, "median_ip": 107.833, "min_ip": 96.333, "q1_ip": 104.333, "q3_ip": 109.417, "max_ip": 111.667, "total_pitches": 6384.0, "range_ip": 15.333, "iqr_ip": 5.083, "pitches_per_ip": 15.068, "ip_per_pitch": 0.066}, {"Org": "TB", "Age": 20.0, "n": 3.0, "pitchers_unique": 3.0, "total_ip": 324.667, "mean_ip": 108.222, "median_ip": 104.0, "min_ip": 84.0, "q1_ip": 94.0, "q3_ip": 120.333, "max_ip": 136.667, "total_pitches": 5457.0, "range_ip": 52.667, "iqr_ip": 26.333, "pitches_per_ip": 16.808, "ip_per_pitch": 0.059}, {"Org": "TB", "Age": 21.0, "n": 5.0, "pitchers_unique": 5.0, "total_ip": 496.333, "mean_ip": 99.267, "median_ip": 119.0, "min_ip": 60.333, "q1_ip": 73.667, "q3_ip": 121.333, "max_ip": 122.0, "total_pitches": 7960.0, "range_ip": 61.667, "iqr_ip": 47.667, "pitches_per_ip": 16.038, "ip_per_pitch": 0.062}, {"Org": "TB", "Age": 22.0, "n": 16.0, "pitchers_unique": 16.0, "total_ip": 1586.667, "mean_ip": 99.167, "median_ip": 101.0, "min_ip": 68.667, "q1_ip": 84.25, "q3_ip": 110.167, "max_ip": 130.0, "total_pitches": 24952.0, "range_ip": 61.333, "iqr_ip": 25.917, "pitches_per_ip": 15.726, "ip_per_pitch": 0.064}, {"Org": "TEX", "Age": 20.0, "n": 9.0, "pitchers_unique": 9.0, "total_ip": 756.667, "mean_ip": 84.074, "median_ip": 88.0, "min_ip": 61.0, "q1_ip": 73.667, "q3_ip": 91.667, "max_ip": 101.667, "total_pitches": 11878.0, "range_ip": 40.667, "iqr_ip": 18.0, "pitches_per_ip": 15.698, "ip_per_pitch": 0.064}, {"Org": "TEX", "Age": 21.0, "n": 12.0, "pitchers_unique": 12.0, "total_ip": 1015.333, "mean_ip": 84.611, "median_ip": 88.333, "min_ip": 60.333, "q1_ip": 66.5, "q3_ip": 96.167, "max_ip": 110.333, "total_pitches": 16525.0, "range_ip": 50.0, "iqr_ip": 29.667, "pitches_per_ip": 16.275, "ip_per_pitch": 0.061}, {"Org": "TEX", "Age": 22.0, "n": 11.0, "pitchers_unique": 11.0, "total_ip": 941.333, "mean_ip": 85.576, "median_ip": 87.667, "min_ip": 61.667, "q1_ip": 76.5, "q3_ip": 90.333, "max_ip": 110.333, "total_pitches": 15300.0, "range_ip": 48.667, "iqr_ip": 13.833, "pitches_per_ip": 16.254, "ip_per_pitch": 0.062}, {"Org": "TOR", "Age": 18.0, "n": 1.0, "pitchers_unique": 1.0, "total_ip": 61.667, "mean_ip": 61.667, "median_ip": 61.667, "min_ip": 61.667, "q1_ip": 61.667, "q3_ip": 61.667, "max_ip": 61.667, "total_pitches": 1081.0, "range_ip": 0.0, "iqr_ip": 0.0, "pitches_per_ip": 17.53, "ip_per_pitch": 0.057}, {"Org": "TOR", "Age": 19.0, "n": 1.0, "pitchers_unique": 1.0, "total_ip": 73.667, "mean_ip": 73.667, "median_ip": 73.667, "min_ip": 73.667, "q1_ip": 73.667, "q3_ip": 73.667, "max_ip": 73.667, "total_pitches": 1251.0, "range_ip": 0.0, "iqr_ip": 0.0, "pitches_per_ip": 16.982, "ip_per_pitch": 0.059}, {"Org": "TOR", "Age": 20.0, "n": 5.0, "pitchers_unique": 5.0, "total_ip": 413.667, "mean_ip": 82.733, "median_ip": 84.0, "min_ip": 68.0, "q1_ip": 82.0, "q3_ip": 85.333, "max_ip": 94.333, "total_pitches": 6652.0, "range_ip": 26.333, "iqr_ip": 3.333, "pitches_per_ip": 16.081, "ip_per_pitch": 0.062}, {"Org": "TOR", "Age": 21.0, "n": 7.0, "pitchers_unique": 7.0, "total_ip": 639.333, "mean_ip": 91.333, "median_ip": 98.0, "min_ip": 61.667, "q1_ip": 72.333, "q3_ip": 106.833, "max_ip": 121.333, "total_pitches": 10425.0, "range_ip": 59.667, "iqr_ip": 34.5, "pitches_per_ip": 16.306, "ip_per_pitch": 0.061}, {"Org": "TOR", "Age": 22.0, "n": 11.0, "pitchers_unique": 11.0, "total_ip": 984.0, "mean_ip": 89.455, "median_ip": 86.667, "min_ip": 63.333, "q1_ip": 75.167, "q3_ip": 102.667, "max_ip": 124.0, "total_pitches": 16524.0, "range_ip": 60.667, "iqr_ip": 27.5, "pitches_per_ip": 16.793, "ip_per_pitch": 0.06}, {"Org": "WSH", "Age": 19.0, "n": 3.0, "pitchers_unique": 3.0, "total_ip": 216.667, "mean_ip": 72.222, "median_ip": 63.0, "min_ip": 61.333, "q1_ip": 62.167, "q3_ip": 77.667, "max_ip": 92.333, "total_pitches": 3632.0, "range_ip": 31.0, "iqr_ip": 15.5, "pitches_per_ip": 16.763, "ip_per_pitch": 0.06}, {"Org": "WSH", "Age": 20.0, "n": 6.0, "pitchers_unique": 6.0, "total_ip": 541.0, "mean_ip": 90.167, "median_ip": 91.667, "min_ip": 60.0, "q1_ip": 79.25, "q3_ip": 102.333, "max_ip": 116.667, "total_pitches": 8681.0, "range_ip": 56.667, "iqr_ip": 23.083, "pitches_per_ip": 16.046, "ip_per_pitch": 0.062}, {"Org": "WSH", "Age": 21.0, "n": 5.0, "pitchers_unique": 5.0, "total_ip": 499.0, "mean_ip": 99.8, "median_ip": 94.667, "min_ip": 79.667, "q1_ip": 94.0, "q3_ip": 96.0, "max_ip": 134.667, "total_pitches": 7939.0, "range_ip": 55.0, "iqr_ip": 2.0, "pitches_per_ip": 15.91, "ip_per_pitch": 0.063}, {"Org": "WSH", "Age": 22.0, "n": 12.0, "pitchers_unique": 12.0, "total_ip": 1172.333, "mean_ip": 97.694, "median_ip": 98.0, "min_ip": 63.0, "q1_ip": 91.5, "q3_ip": 104.167, "max_ip": 134.333, "total_pitches": 18874.0, "range_ip": 71.333, "iqr_ip": 12.667, "pitches_per_ip": 16.1, "ip_per_pitch": 0.062}];
+const ageSummary = [{"Age": 18.0, "n": 20.0, "total_ip": 1432.333, "mean_ip": 71.617, "median_ip": 72.333, "total_pitches": 23051.0, "pitches_per_ip": 16.093, "share_of_sample": 0.023}, {"Age": 19.0, "n": 80.0, "total_ip": 6423.0, "mean_ip": 80.288, "median_ip": 76.333, "total_pitches": 104886.0, "pitches_per_ip": 16.33, "share_of_sample": 0.093}, {"Age": 20.0, "n": 162.0, "total_ip": 14154.0, "mean_ip": 87.37, "median_ip": 85.667, "total_pitches": 234024.0, "pitches_per_ip": 16.534, "share_of_sample": 0.188}, {"Age": 21.0, "n": 229.0, "total_ip": 21100.0, "mean_ip": 92.14, "median_ip": 90.333, "total_pitches": 348674.0, "pitches_per_ip": 16.525, "share_of_sample": 0.266}, {"Age": 22.0, "n": 369.0, "total_ip": 34704.667, "mean_ip": 94.051, "median_ip": 94.667, "total_pitches": 570787.0, "pitches_per_ip": 16.447, "share_of_sample": 0.429}];
+
+const orgSelect = document.getElementById('orgSelect');
+const ageSelect = document.getElementById('ageSelect');
+const minN = document.getElementById('minN');
+const minNLabel = document.getElementById('minNLabel');
+
+const allOrgs = [...new Set(orgSummary.map(d => d.Org))].sort();
+orgSelect.innerHTML = '<option value="ALL">All orgs</option>' + allOrgs.map(o => `<option value="${o}">${o}</option>`).join('');
+
+function fmt(x, digits=1) {
+  if (x === null || x === undefined || Number.isNaN(x)) return '';
+  return Number(x).toFixed(digits);
+}
+
+function getFilteredOrgAge() {
+  const org = orgSelect.value;
+  const age = ageSelect.value;
+  const minNVal = Number(minN.value);
+
+  return orgAge.filter(d => {
+    const orgOk = org === 'ALL' || d.Org === org;
+    const ageOk = age === 'ALL' || String(d.Age) === String(age);
+    const nOk = Number(d.n) >= minNVal;
+    return orgOk && ageOk && nOk;
+  });
+}
+
+function renderRangePlot() {
+  const rows = getFilteredOrgAge();
+  const selectedOrg = orgSelect.value;
+  const selectedAge = ageSelect.value;
+
+  let data = [];
+  let layout = {
+    paper_bgcolor: 'rgba(0,0,0,0)',
+    plot_bgcolor: 'rgba(0,0,0,0)',
+    font: {color: '#e7edf7'},
+    margin: {l: 100, r: 20, t: 30, b: 60},
+    xaxis: {title: 'IP', gridcolor: '#26324a'},
+    yaxis: {gridcolor: '#26324a'},
+    legend: {orientation: 'h'}
+  };
+
+  const colors = {
+    18: '#7fd1ae',
+    19: '#5da9ff',
+    20: '#ffcd6b',
+    21: '#ff8c69',
+    22: '#d08cff'
+  };
+
+  if (selectedOrg === 'ALL') {
+    const ages = selectedAge === 'ALL' ? [18,19,20,21,22] : [Number(selectedAge)];
+    const orgs = [...new Set(rows.map(d => d.Org))].sort();
+
+    ages.forEach(age => {
+      const ageRows = rows.filter(d => Number(d.Age) === age).sort((a,b) => a.Org.localeCompare(b.Org));
+      const lineX = [];
+      const lineY = [];
+      const medX = [];
+      const medY = [];
+
+      ageRows.forEach(r => {
+        lineX.push(r.min_ip, r.max_ip, null);
+        lineY.push(r.Org, r.Org, null);
+        medX.push(r.median_ip);
+        medY.push(r.Org);
+      });
+
+      data.push({
+        type: 'scatter',
+        mode: 'lines',
+        x: lineX,
+        y: lineY,
+        name: `Age ${age} range`,
+        line: {color: colors[age], width: 3},
+        hoverinfo: 'skip'
+      });
+      data.push({
+        type: 'scatter',
+        mode: 'markers',
+        x: medX,
+        y: medY,
+        name: `Age ${age} median`,
+        marker: {color: colors[age], size: 8, line: {width: 1, color: '#fff'}},
+        customdata: ageRows.map(r => [r.Org, r.Age, r.n, r.min_ip, r.q1_ip, r.median_ip, r.q3_ip, r.max_ip, r.mean_ip, r.range_ip, r.pitches_per_ip]),
+        hovertemplate:
+          '<b>%{customdata[0]}</b><br>' +
+          'Age: %{customdata[1]}<br>' +
+          'N: %{customdata[2]}<br>' +
+          'Min: %{customdata[3]:.1f}<br>' +
+          'Q1: %{customdata[4]:.1f}<br>' +
+          'Median: %{customdata[5]:.1f}<br>' +
+          'Q3: %{customdata[6]:.1f}<br>' +
+          'Max: %{customdata[7]:.1f}<br>' +
+          'Mean: %{customdata[8]:.1f}<br>' +
+          'Range: %{customdata[9]:.1f}<br>' +
+          'Pitches/IP: %{customdata[10]:.2f}<extra></extra>'
+      });
+    });
+
+    layout.height = Math.max(700, orgs.length * 28 + 180);
+    layout.yaxis = {
+      title: 'Org',
+      categoryorder: 'array',
+      categoryarray: orgs,
+      automargin: true,
+      gridcolor: '#26324a'
+    };
+  } else {
+    const orgRows = rows.sort((a,b) => Number(a.Age) - Number(b.Age));
+    const lineX = [];
+    const lineY = [];
+    const medX = [];
+    const medY = [];
+
+    orgRows.forEach(r => {
+      lineX.push(r.min_ip, r.max_ip, null);
+      lineY.push(String(r.Age), String(r.Age), null);
+      medX.push(r.median_ip);
+      medY.push(String(r.Age));
+    });
+
+    data = [
+      {
+        type: 'scatter',
+        mode: 'lines',
+        x: lineX,
+        y: lineY,
+        name: 'Range',
+        line: {color: '#5da9ff', width: 4},
+        hoverinfo: 'skip'
+      },
+      {
+        type: 'scatter',
+        mode: 'markers',
+        x: medX,
+        y: medY,
+        name: 'Median',
+        marker: {color: '#ffcd6b', size: 10, line: {width: 1, color: '#fff'}},
+        customdata: orgRows.map(r => [r.Org, r.Age, r.n, r.min_ip, r.q1_ip, r.median_ip, r.q3_ip, r.max_ip, r.mean_ip, r.range_ip, r.pitches_per_ip]),
+        hovertemplate:
+          '<b>%{customdata[0]}</b><br>' +
+          'Age: %{customdata[1]}<br>' +
+          'N: %{customdata[2]}<br>' +
+          'Min: %{customdata[3]:.1f}<br>' +
+          'Q1: %{customdata[4]:.1f}<br>' +
+          'Median: %{customdata[5]:.1f}<br>' +
+          'Q3: %{customdata[6]:.1f}<br>' +
+          'Max: %{customdata[7]:.1f}<br>' +
+          'Mean: %{customdata[8]:.1f}<br>' +
+          'Range: %{customdata[9]:.1f}<br>' +
+          'Pitches/IP: %{customdata[10]:.2f}<extra></extra>'
+      }
+    ];
+
+    layout.height = 520;
+    layout.title = `${selectedOrg} by age`;
+    layout.yaxis = {
+      title: 'Age',
+      categoryorder: 'array',
+      categoryarray: ['18','19','20','21','22'],
+      gridcolor: '#26324a'
+    };
+  }
+
+  Plotly.newPlot('rangePlot', data, layout, {responsive: true, displayModeBar: false});
+}
+
+function renderScatter() {
+  const selectedOrg = orgSelect.value;
+  const data = [{
+    type: 'scatter',
+    mode: 'markers+text',
+    x: orgSummary.map(d => d.total_ip),
+    y: orgSummary.map(d => d.pitches_per_ip),
+    text: orgSummary.map(d => d.Org),
+    textposition: 'top center',
+    marker: {
+      size: orgSummary.map(d => Math.max(10, d.pitcher_seasons * 0.8)),
+      color: orgSummary.map(d => selectedOrg === 'ALL' ? d.pitches_per_ip : (d.Org === selectedOrg ? '#ffcd6b' : '#5da9ff')),
+      opacity: orgSummary.map(d => selectedOrg === 'ALL' ? 0.85 : (d.Org === selectedOrg ? 1 : 0.25)),
+      line: {width: 1, color: '#fff'}
+    },
+    customdata: orgSummary.map(d => [d.Org, d.pitcher_seasons, d.total_ip, d.mean_ip, d.median_ip, d.pitches_per_ip]),
+    hovertemplate:
+      '<b>%{customdata[0]}</b><br>' +
+      'Pitcher-seasons: %{customdata[1]}<br>' +
+      'Total IP: %{customdata[2]:.1f}<br>' +
+      'Mean IP: %{customdata[3]:.1f}<br>' +
+      'Median IP: %{customdata[4]:.1f}<br>' +
+      'Pitches/IP: %{customdata[5]:.2f}<extra></extra>'
+  }];
+
+  const layout = {
+    paper_bgcolor: 'rgba(0,0,0,0)',
+    plot_bgcolor: 'rgba(0,0,0,0)',
+    font: {color: '#e7edf7'},
+    margin: {l: 60, r: 20, t: 30, b: 60},
+    xaxis: {title: 'Total IP', gridcolor: '#26324a'},
+    yaxis: {title: 'Pitches per IP (lower is better)', gridcolor: '#26324a'}
+  };
+
+  Plotly.newPlot('scatterPlot', data, layout, {responsive: true, displayModeBar: false});
+}
+
+function makeHeatmap(metric, divId, title, reverse=false) {
+  const minNVal = Number(minN.value);
+  const rows = orgAge.filter(d => d.n >= minNVal);
+  const orgs = [...new Set(rows.map(d => d.Org))].sort();
+  const ages = [18,19,20,21,22];
+
+  const z = orgs.map(org => ages.map(age => {
+    const row = rows.find(d => d.Org === org && Number(d.Age) === age);
+    return row ? row[metric] : null;
+  }));
+
+  const text = orgs.map(org => ages.map(age => {
+    const row = rows.find(d => d.Org === org && Number(d.Age) === age);
+    return row ? `N=${row.n}<br>${metric}=${Number(row[metric]).toFixed(metric === 'pitches_per_ip' ? 2 : 1)}` : '';
+  }));
+
+  const data = [{
+    type: 'heatmap',
+    x: ages.map(String),
+    y: orgs,
+    z: z,
+    text: text,
+    hovertemplate: '<b>%{y}</b><br>Age: %{x}<br>%{text}<extra></extra>',
+    colorscale: reverse ? 'RdYlGn_r' : 'Viridis',
+    colorbar: {title: metric === 'pitches_per_ip' ? 'Pitches/IP' : 'Mean IP'}
+  }];
+
+  const layout = {
+    paper_bgcolor: 'rgba(0,0,0,0)',
+    plot_bgcolor: 'rgba(0,0,0,0)',
+    font: {color: '#e7edf7'},
+    margin: {l: 80, r: 20, t: 30, b: 50},
+    xaxis: {title: 'Age'},
+    yaxis: {title: 'Org', automargin: true}
+  };
+
+  Plotly.newPlot(divId, data, layout, {responsive: true, displayModeBar: false});
+}
+
+function renderAgeBars() {
+  const data = [{
+    type: 'bar',
+    x: ageSummary.map(d => String(d.Age)),
+    y: ageSummary.map(d => d.n),
+    text: ageSummary.map(d => `${d.n} rows<br>${(d.share_of_sample*100).toFixed(1)}%`),
+    textposition: 'outside',
+    marker: {
+      color: ['#7fd1ae','#5da9ff','#ffcd6b','#ff8c69','#d08cff']
+    },
+    hovertemplate: 'Age %{x}<br>N: %{y}<extra></extra>'
+  }];
+
+  const layout = {
+    paper_bgcolor: 'rgba(0,0,0,0)',
+    plot_bgcolor: 'rgba(0,0,0,0)',
+    font: {color: '#e7edf7'},
+    margin: {l: 60, r: 20, t: 20, b: 50},
+    xaxis: {title: 'Age'},
+    yaxis: {title: 'Pitcher-seasons', gridcolor: '#26324a'}
+  };
+
+  Plotly.newPlot('ageBars', data, layout, {responsive: true, displayModeBar: false});
+}
+
+function renderTable() {
+  const rows = getFilteredOrgAge().sort((a,b) => {
+    if (a.Org !== b.Org) return a.Org.localeCompare(b.Org);
+    return Number(a.Age) - Number(b.Age);
+  });
+
+  const cols = [
+    ['Org', 0], ['Age', 0], ['N', 0], ['Total IP', 1], ['Mean IP', 1], ['Median IP', 1],
+    ['Min IP', 1], ['Q1', 1], ['Q3', 1], ['Max IP', 1], ['Range', 1], ['P/IP', 2]
+  ];
+
+  let html = '<thead><tr>' + cols.map(c => `<th>${c[0]}</th>`).join('') + '</tr></thead><tbody>';
+  rows.forEach(r => {
+    html += '<tr>' +
+      `<td>${r.Org}</td>` +
+      `<td>${r.Age}</td>` +
+      `<td>${fmt(r.n,0)}</td>` +
+      `<td>${fmt(r.total_ip,1)}</td>` +
+      `<td>${fmt(r.mean_ip,1)}</td>` +
+      `<td>${fmt(r.median_ip,1)}</td>` +
+      `<td>${fmt(r.min_ip,1)}</td>` +
+      `<td>${fmt(r.q1_ip,1)}</td>` +
+      `<td>${fmt(r.q3_ip,1)}</td>` +
+      `<td>${fmt(r.max_ip,1)}</td>` +
+      `<td>${fmt(r.range_ip,1)}</td>` +
+      `<td>${fmt(r.pitches_per_ip,2)}</td>` +
+      '</tr>';
+  });
+  html += '</tbody>';
+  document.getElementById('summaryTable').innerHTML = html;
+}
+
+function renderAll() {
+  minNLabel.textContent = minN.value;
+  renderRangePlot();
+  renderScatter();
+  makeHeatmap('mean_ip', 'heatmapMean', 'Mean IP', false);
+  makeHeatmap('pitches_per_ip', 'heatmapEff', 'Pitches per IP', true);
+  renderAgeBars();
+  renderTable();
+}
+
+orgSelect.addEventListener('change', renderAll);
+ageSelect.addEventListener('change', renderAll);
+minN.addEventListener('input', renderAll);
+
+renderAll();
+</script>
+</body>
+</html>
